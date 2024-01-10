@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Map class supporting labels for Leaflet</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <link rel="stylesheet" href="leaflet-mapwithlabels.css" />
+        <script src="leaflet-mapwithlabels.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            #map_div {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map_div"></div>
+        <script>
+            // create map object using the svglabel renderer
+            const map = L.mapWithLabels('map_div').fitBounds([[45.5, 16], [48.5, 23]]);
+            
+            // add OSM tile layer
+            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            var markers = [];
+            
+            // add a marker with a label
+            markers.push(L.marker([47.5,19.05],{ label: 'Budapest', labelPriority: 2e6 }).addTo(map));
+
+            // fetch geojson data and create a polygon layer with labels
+            fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
+                L.geoJSON(d, {
+                    label: l => l.feature.properties.Nev, 
+                    labelPos: 'cc', 
+                    labelStyle: { color: 'darkblue', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
+                    labelPriority: l => l.feature.properties.Nepesseg,
+                }).addTo(map);
+            });
+            
+            // add 50 random circle markers
+            for (let i=0; i<50; i++) {
+                let lat = Math.random()*3 + 45.5;
+                let lon = Math.random()*7 + 16;
+                markers.push(L.circleMarker([lat, lon],{
+                    pane: 'markerPane',
+                    labelGap: 4, 
+                    label: i+'. pont', 
+                    labelStyle: { color: 'red' },
+                    markerWithLabelOnly: true,
+                    radius: Math.random()*5 + 2,
+                    color: 'red'
+                }).addTo(map));
+            }
+        </script>
+    </body>
+</html>
