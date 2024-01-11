@@ -21,41 +21,67 @@
     <body>
         <div id="map_div"></div>
         <script>
-            // create map object
-            const map = L.mapWithLabels('map_div').fitBounds([[45.5, 16], [48.5, 23]]);
-            
-            // add OSM tile layer
-            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-            
-            // add a marker with a label
-            L.marker([47.5, 19.05], { label: 'Budapest', labelPriority: 2e6 }).addTo(map);
+            // list object properties in html format
+            let props = o => {
+                let s = '';
+                for (let i in o) s += i + ': ' + o[i] + '<br/>';
+                return s;
+            }
 
-            // fetch geojson data and create a polygon layer with labels
+            // create map object
+            const map = L.mapWithLabels('map_div').fitBounds([[45.7, 16.1], [48.6, 22.9]]);
+            	
+            function polyColor(f) {
+				let p=f.properties.Nepesseg;
+                let shade=Math.random()*100+100;
+                return { fillColor: `rgb(${shade},${shade},${shade})`, fillOpacity: .7, color: 'black', opacity: 1, weight: 1 };
+            }                  
+			
+            // fetch geojson data and create a layer with labels
             fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
-                L.geoJSON(d, {
-                    label: l => l.feature.properties.Nev, 
+                // new layer stored in global variable to make debugging easier
+                window.ll = L.geoJSON(d, {
+                    label: l=>l.feature.properties.Nev, 
                     labelPos: 'cc', 
-                    labelStyle: { color: 'darkblue', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
-                    labelPriority: l => l.feature.properties.Nepesseg,
-                }).addTo(map);
+                    labelStyle: { fontWeight: 'bold', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
+                    labelPriority: l=>l.feature.properties.Nepesseg,
+                    style: polyColor
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
             });
             
-            // add 50 random circle markers
-            for (let i = 0; i < 50; i++) {
-                let lat = Math.random()*3 + 45.5;
-                let lon = Math.random()*7 + 16;
-                L.circleMarker([lat, lon], {
-                    pane: 'markerPane',
-                    labelGap: 4, 
-                    label: 'Point ' + i, 
-                    labelStyle: { color: 'red' },
-                    markerWithLabelOnly: true,
-                    radius: Math.random()*5 + 2,
-                    color: 'red'
-                }).addTo(map);
-            }
+            // fetch geojson data and create a layer with labels
+            fetch('utak.geojson').then(r => r.json()).then(d => {
+                // new layer stored in global variable to make debugging easier
+                window.ll = L.geoJSON(d, {
+                    label: l=>l.feature.properties.szam.replace(';','<br/>'), 
+                    labelPriority: l=>l.feature.properties.szam.startsWith('M')?2:1,
+                    labelPos: 'cc', 
+                    labelStyle: l=>({ 
+                        background: l.feature.properties.szam.startsWith('M')?'blue':'green', 
+                        border: 'solid 2px white', padding: '0 5px',
+                        borderRadius: '6px', color: 'white', textShadow: 'none', textAlign: 'center'
+                    }),
+                    style: f=>f.properties.szam.startsWith('M')?{ color: 'red', opacity: 1, weight: 5 }:{ color: 'orange', opacity: 1, weight: 3 },
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+
+            // fetch geojson data and create a settlement layer with labels
+            fetch('hu_settl.geojson').then(r => r.json()).then(d => {
+                let t1=Date.now();
+                window.gjl=L.geoJSON(d, {
+                    markersInheritOptions: true,
+                    pointToLayer: (gj, ll) => L.circleMarker(ll, {
+                        radius: gj.properties.population?Math.pow(gj.properties.population,.2)-1:1,
+                        labelStyle: l => (l.feature.properties.place=='city'?{ textTransform: 'uppercase', fontWeight:'bold' }:{}),
+                        labelPriority: l => l.feature.properties.population,
+                        markerWithLabelOnly: true,
+                        label: l => l.feature.properties.name
+                    }), 
+                    style: f => ({ color: '#000', weight: f.properties.place=='city'?3:1 })
+                }).addTo(map).bindPopup(l => l.feature.properties.name);
+                let t2=Date.now();
+                console.log('layer load completed in '+((t2-t1)/1000).toFixed(1)+' s');
+            });           
         </script>
     </body>
 </html>

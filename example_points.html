@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Map class supporting labels for Leaflet</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <link rel="stylesheet" href="leaflet-mapwithlabels.css" />
+        <script src="leaflet-mapwithlabels.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            #map_div {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="map_div"></div>
+        <script>
+            // create map object
+            const map = L.mapWithLabels('map_div').fitBounds([[45.5, 16], [48.5, 23]]);
+            
+            // add OSM tile layer
+            const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // fetch geojson data and create a settlement layer with labels
+            fetch('hu_settl.geojson').then(r => r.json()).then(d => {
+                let t1=Date.now();
+                L.geoJSON(d, {
+                    markersInheritOptions: true,
+                    pointToLayer: (gj, ll) => L.circleMarker(ll, {
+                        labelStyle: l => (l.feature.properties.place=='city'?{ textTransform: 'uppercase', fontWeight:'bold' }:{}),
+                        labelPriority: l => l.feature.properties.population,
+                        markerWithLabelOnly: true,
+                        label: l => l.feature.properties.name,
+                        radius: gj.properties.population?Math.pow(gj.properties.population,.2)-1:1,
+                    }), 
+                    style: f => ({ color: '#000', weight: f.properties.place=='city'?3:1 })
+                }).addTo(map).bindPopup(l => l.feature.properties.name);
+                let t2=Date.now();
+                console.log('layer load completed in '+((t2-t1)/1000).toFixed(1)+' s');
+            });
+        </script>
+    </body>
+</html>

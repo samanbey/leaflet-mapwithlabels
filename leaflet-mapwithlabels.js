@@ -15,6 +15,14 @@ L.Layer.mergeOptions({
     labelStyle: {}
 });
 
+// LayerGroup has to be modified to prevent updating labels after the addition of each single sublayer
+L.LayerGroup.include({
+	onAdd(map) {
+		this.eachLayer(l => map.addLayer(l, false), map);
+        map._updateLabels();
+	}    
+});
+
 L.MapWithLabels = L.Map.extend({
     options: {
         labelPane: 'tooltipPane'
@@ -31,9 +39,8 @@ L.MapWithLabels = L.Map.extend({
         this.on('zoomanim', this._zoomAnim);
     },
        
-    addLayer(layer) {
+    addLayer(layer, updateLabels = true) {
         L.Map.prototype.addLayer.call(this, layer);
-        
         // if it is not a layer group, look for label
         if (!layer.getLayers && layer.options.label) {
             let layerId = layer._leaflet_id; // ID of the layer the label belongs to
@@ -63,7 +70,8 @@ L.MapWithLabels = L.Map.extend({
                 geomType: geomType,
                 priority: pri
             }
-            this._updateLabels();
+            if (updateLabels)
+                this._updateLabels();
         }        
     },
     
@@ -117,6 +125,7 @@ L.MapWithLabels = L.Map.extend({
     },
     
     _updateLabels() {
+        let t1=Date.now();
         this._labelContainer.innerHTML = ''; // remove all labels
         
         this._bbs=[]; // array of bounding boxes.
@@ -201,7 +210,8 @@ L.MapWithLabels = L.Map.extend({
                 // check whether the respective marker also has to be (re-)displayed
                 if (lab.layer.options.markerWithLabelOnly) {
                     let o = lab.layer._icon || lab.layer._path;
-                    o.style.visibility = '';
+                    //o.style.visibility = '';
+                    o.style.display = '';
                 }            }
             else {
                 // remove label <span> if does not fit
@@ -209,7 +219,8 @@ L.MapWithLabels = L.Map.extend({
                 // check whether the respective marker also has to be hidden
                 if (lab.layer.options.markerWithLabelOnly) {
                     let o = lab.layer._icon || lab.layer._path;
-                    o.style.visibility = 'hidden';
+                    //o.style.visibility = 'hidden';
+                    o.style.display = 'none';
                 }
             }
             lab.span.style.top = `${pos.y}px`;

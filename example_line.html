@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Labels in Leaflet? - Lines</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <link rel="stylesheet" href="leaflet-mapwithlabels.css" />
+        <script src="leaflet-mapwithlabels.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            #map_div {
+                width: 100%;
+                height: 100%;
+            }            
+        </style>
+    </head>
+    <body>
+        <div id="map_div"></div>
+        <script>
+            // list object properties in html format
+            let props = o => {
+                let s = '';
+                for (let i in o) s += i + ': ' + o[i] + '<br/>';
+                return s;
+            }
+
+            // create map object
+            const map = L.mapWithLabels('map_div').fitBounds([[45.7, 16.1], [48.6, 22.9]]);
+            
+            // add OSM tile layer
+			const osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  }).addTo(map);
+						
+            // fetch geojson data and create a layer with labels
+            fetch('utak.geojson').then(r => r.json()).then(d => {
+                // new layer stored in global variable to make debugging easier
+                window.ll = L.geoJSON(d, {
+                    label: l=>l.feature.properties.szam.replace(';','<br/>'), 
+                    labelPriority: l=>l.feature.properties.szam.startsWith('M')?2:1,
+                    labelPos: 'cc', 
+                    labelStyle: l=>({ 
+                        background: l.feature.properties.szam.startsWith('M')?'blue':'green', 
+                        border: 'solid 2px white', padding: '0 5px',
+                        borderRadius: '6px', color: 'white', textShadow: 'none', textAlign: 'center'
+                    }),
+                    style: f=>f.properties.szam.startsWith('M')?{ color: 'red', opacity: 1, weight: 5 }:{ color: 'orange', opacity: 1, weight: 3 },
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+        </script>
+    </body>
+</html>

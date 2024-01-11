@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Labels in Leaflet? - Polygons</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+        <!-- using https://github.com/samanbey/leaflet-hatchclass -->
+        <script src="https://samanbey.github.io/leaflet-hatchclass/leaflet-hatchclass.js"></script>
+        <link rel="stylesheet" href="leaflet-mapwithlabels.css" />
+        <script src="leaflet-mapwithlabels.js"></script>
+        <style>
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+            #map_div {
+                width: 100%;
+                height: 100%;
+            }            
+        </style>
+    </head>
+    <body>
+        <div id="map_div"></div>
+        <script>
+            // list object properties in html format
+            let props = o => {
+                let s = '';
+                for (let i in o) s += i + ': ' + o[i] + '<br/>';
+                return s;
+            }
+
+            // create map object
+            const map = L.mapWithLabels('map_div').fitBounds([[45.7, 16.1], [48.6, 22.9]]);
+            
+			let h0=L.hatchClass([{ color: 'black', width: 3 },{ color: 'white', width: 5 }]);
+			let h1=L.hatchClass([{ color: 'black', width: 2 },{ color: 'white', width: 6 }]);
+			let h2=L.hatchClass([{ color: 'black', width: 1 },{ color: 'white', width: 7 }]);
+			
+            function hatch(f) {
+				let p=f.properties.Nepesseg;
+                return { className: p<400000?h0:p<800000?h1:h2, fillOpacity: .7, color: 'black', opacity: 1, weight: 1 };
+            }                  
+			
+            // fetch geojson data and create a layer with labels
+            fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
+                // new layer stored in global variable to make debugging easier
+                window.ll = L.geoJSON(d, {
+                    label: l=>l.feature.properties.Nev, 
+                    labelPos: 'cc', 
+                    labelStyle: { fontWeight: 'bold', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
+                    labelPriority: l=>l.feature.properties.Nepesseg,
+                    style: hatch
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+        </script>
+    </body>
+</html>

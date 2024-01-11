@@ -41,6 +41,27 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
 - `labelStyle`: label styling CSS object literal or function assigning style object to layer objects.
                 Default: `{}`
 - `labelPriority`: priority of label (higher numbers come earlier). Either a number or a function.
+- `markerWithLabelOnly`: marker is displayed if its label also fits.
 
-# Example
+# Known issues
+- L.GeoJSON does not pass over options to its custom Marker layers, 
+  therefore if custom markers are used for GeoJSON points, label-specific options has to be included within marker factory function options:
+    ``` javascript
+    L.geoJSON(d, {
+        pointToLayer: (gj, ll) => L.circleMarker(ll, {
+            labelStyle: l => (l.feature.properties.place=='city'?{ textTransform: 'uppercase', fontWeight:'bold' }:{}),
+            labelPriority: l => l.feature.properties.population,
+            markerWithLabelOnly: true,
+            label: l => l.feature.properties.name,
+            radius: gj.properties.population?Math.pow(gj.properties.population,.2)-1:1,
+        }), 
+        style: f => ({ color: '#000', weight: f.properties.place=='city'?3:1 })
+    })    
+    ```
+  If the pointToLayer option is not used, it is enough to include `markersInheritOptions: true` in options.
+        
+# Examples
+https://samanbey.github.io/leaflet-mapwithlabels/example_points.html
+https://samanbey.github.io/leaflet-mapwithlabels/example_line.html
+https://samanbey.github.io/leaflet-mapwithlabels/example_poly.html
 https://samanbey.github.io/leaflet-mapwithlabels/example.html
