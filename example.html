@@ -21,7 +21,7 @@
     <body>
         <div id="map_div"></div>
         <script>
-            // create map object using the svglabel renderer
+            // create map object
             const map = L.mapWithLabels('map_div').fitBounds([[45.5, 16], [48.5, 23]]);
             
             // add OSM tile layer
@@ -29,10 +29,8 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
             
-            var markers = [];
-            
             // add a marker with a label
-            markers.push(L.marker([47.5,19.05],{ label: 'Budapest', labelPriority: 2e6 }).addTo(map));
+            L.marker([47.5, 19.05], { label: 'Budapest', labelPriority: 2e6 }).addTo(map);
 
             // fetch geojson data and create a polygon layer with labels
             fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
@@ -45,18 +43,18 @@
             });
             
             // add 50 random circle markers
-            for (let i=0; i<50; i++) {
+            for (let i = 0; i < 50; i++) {
                 let lat = Math.random()*3 + 45.5;
                 let lon = Math.random()*7 + 16;
-                markers.push(L.circleMarker([lat, lon],{
+                L.circleMarker([lat, lon], {
                     pane: 'markerPane',
                     labelGap: 4, 
-                    label: i+'. pont', 
+                    label: 'Point ' + i, 
                     labelStyle: { color: 'red' },
                     markerWithLabelOnly: true,
                     radius: Math.random()*5 + 2,
                     color: 'red'
-                }).addTo(map));
+                }).addTo(map);
             }
         </script>
     </body>
