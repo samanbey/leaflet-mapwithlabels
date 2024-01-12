@@ -5,8 +5,8 @@
         <meta charset="utf-8" />
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
-        <link rel="stylesheet" href="leaflet-mapwithlabels.css" />
-        <script src="leaflet-mapwithlabels.js"></script>
+        <link rel="stylesheet" href="../leaflet-mapwithlabels.css" />
+        <script src="../leaflet-mapwithlabels.js"></script>
         <style>
             html, body {
                 height: 100%;
@@ -30,7 +30,7 @@
             }).addTo(map);
 
             // fetch geojson data and create a settlement layer with labels
-            fetch('hu_settl.geojson').then(r => r.json()).then(d => {
+            fetch('data/hu_settl.geojson').then(r => r.json()).then(d => {
                 let t1=Date.now();
                 L.geoJSON(d, {
                     markersInheritOptions: true,

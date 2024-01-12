@@ -66,7 +66,7 @@ Labels are `<span>` elements with `leaflet-label` class. Default label style is 
   If the pointToLayer option is not used, it is enough to include `markersInheritOptions: true` in options.
         
 # Examples
-- 3182 Hungarian settlements as point objects: https://samanbey.github.io/leaflet-mapwithlabels/example_points.html
-- Roads with numbers: https://samanbey.github.io/leaflet-mapwithlabels/example_line.html
-- Polygons with label: https://samanbey.github.io/leaflet-mapwithlabels/example_poly.html
-- Several layers with labels: https://samanbey.github.io/leaflet-mapwithlabels/example.html
+- 3182 Hungarian settlements as point objects: https://samanbey.github.io/leaflet-mapwithlabels/examples/example_points.html
+- Roads with numbers: https://samanbey.github.io/leaflet-mapwithlabels/examples/example_line.html
+- Polygons with label: https://samanbey.github.io/leaflet-mapwithlabels/examples/example_poly.html
+- Several layers with labels: https://samanbey.github.io/leaflet-mapwithlabels/examples/example.html

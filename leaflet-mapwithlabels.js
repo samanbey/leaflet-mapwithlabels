@@ -210,8 +210,9 @@ L.MapWithLabels = L.Map.extend({
                 // check whether the respective marker also has to be (re-)displayed
                 if (lab.layer.options.markerWithLabelOnly) {
                     let o = lab.layer._icon || lab.layer._path;
-                    //o.style.visibility = '';
                     o.style.display = '';
+                    if (lab.layer._shadow)
+                        lab.layer._shadow.style.display = '';
                 }            }
             else {
                 // remove label <span> if does not fit
@@ -219,8 +220,9 @@ L.MapWithLabels = L.Map.extend({
                 // check whether the respective marker also has to be hidden
                 if (lab.layer.options.markerWithLabelOnly) {
                     let o = lab.layer._icon || lab.layer._path;
-                    //o.style.visibility = 'hidden';
                     o.style.display = 'none';
+                    if (lab.layer._shadow)
+                        lab.layer._shadow.style.display = 'none';
                 }
             }
             lab.span.style.top = `${pos.y}px`;
