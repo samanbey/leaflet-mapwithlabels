@@ -30,17 +30,23 @@
 
             // create map object
             const map = L.mapWithLabels('map_div').fitBounds([[45.7, 16.1], [48.6, 22.9]]);
+            
+            // create map panes
+            map.createPane('hydroPane').style.zIndex = 410;
+            map.createPane('roadPane').style.zIndex = 420;
+            map.createPane('settlPane').style.zIndex = 430;
             	
             function polyColor(f) {
 				let p=f.properties.Nepesseg;
-                let shade=Math.random()*100+100;
-                return { fillColor: `rgb(${shade},${shade},${shade})`, fillOpacity: .7, color: 'black', opacity: 1, weight: 1 };
+                let r=Math.random()*150+100;
+                let g=Math.random()*150+100;
+                let b=Math.random()*150+100;
+                return { fillColor: `rgb(${r},${g},${b})`, fillOpacity: .7, color: 'black', opacity: 1, weight: 1 };
             }                  
 			
-            // fetch geojson data and create a layer with labels
+            // counties of Hungary
             fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
-                // new layer stored in global variable to make debugging easier
-                window.ll = L.geoJSON(d, {
+                L.geoJSON(d, {
                     label: l=>l.feature.properties.Nev, 
                     labelPos: 'cc', 
                     labelStyle: { fontWeight: 'bold', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
@@ -49,10 +55,49 @@
                 }).addTo(map).bindPopup(l => props(l.feature.properties));
             });
             
-            // fetch geojson data and create a layer with labels
+            // hydorgraphy
+            const hydroStyle = { color: 'blue', opacity: 1, fillColor: '#88f', fillOpacity: 1, weight: 1 };
+            const hydroLabelStyle = { color: 'blue', fontStyle: 'italic', textAlign: 'center'};
+
+            // large rivers
+            fetch('folyok_poly.geojson').then(r => r.json()).then(d => {
+                L.geoJSON(d, {
+                    label: l=>l.feature.properties.Nev, 
+                    labelPos: 'cc', 
+                    labelStyle: hydroLabelStyle,
+                    labelPriority: 1e5,
+                    pane: 'hydroPane',
+                    style: hydroStyle
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+
+            // large lakes
+            fetch('nagytavak.geojson').then(r => r.json()).then(d => {
+                L.geoJSON(d, {
+                    label: l=>l.feature.properties.Nev, 
+                    labelPos: 'cc', 
+                    labelStyle: hydroLabelStyle,
+                    labelPriority: 1e5,
+                    pane: 'hydroPane',
+                    style: hydroStyle
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+            
+            // minor rivers
+            fetch('folyok.geojson').then(r => r.json()).then(d => {
+                L.geoJSON(d, {
+                    label: l=>l.feature.properties.Nev, 
+                    labelPos: 'cc', 
+                    labelStyle: hydroLabelStyle,
+                    labelPriority: 1e4,
+                    pane: 'hydroPane',
+                    style: hydroStyle
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
+            });
+           
+            // main road network
             fetch('utak.geojson').then(r => r.json()).then(d => {
-                // new layer stored in global variable to make debugging easier
-                window.ll = L.geoJSON(d, {
+                L.geoJSON(d, {
                     label: l=>l.feature.properties.szam.replace(';','<br/>'), 
                     labelPriority: l=>l.feature.properties.szam.startsWith('M')?2:1,
                     labelPos: 'cc', 
@@ -61,26 +106,25 @@
                         border: 'solid 2px white', padding: '0 5px',
                         borderRadius: '6px', color: 'white', textShadow: 'none', textAlign: 'center'
                     }),
+                    pane: 'roadPane',
                     style: f=>f.properties.szam.startsWith('M')?{ color: 'red', opacity: 1, weight: 5 }:{ color: 'orange', opacity: 1, weight: 3 },
                 }).addTo(map).bindPopup(l => props(l.feature.properties));
             });
 
-            // fetch geojson data and create a settlement layer with labels
+            // settlements
             fetch('hu_settl.geojson').then(r => r.json()).then(d => {
-                let t1=Date.now();
-                window.gjl=L.geoJSON(d, {
+                L.geoJSON(d, {
                     markersInheritOptions: true,
                     pointToLayer: (gj, ll) => L.circleMarker(ll, {
                         radius: gj.properties.population?Math.pow(gj.properties.population,.2)-1:1,
                         labelStyle: l => (l.feature.properties.place=='city'?{ textTransform: 'uppercase', fontWeight:'bold' }:{}),
                         labelPriority: l => l.feature.properties.population,
                         markerWithLabelOnly: true,
+                        pane: 'settlPane',
                         label: l => l.feature.properties.name
                     }), 
-                    style: f => ({ color: '#000', weight: f.properties.place=='city'?3:1 })
-                }).addTo(map).bindPopup(l => l.feature.properties.name);
-                let t2=Date.now();
-                console.log('layer load completed in '+((t2-t1)/1000).toFixed(1)+' s');
+                    style: f => ({ color: '#000', fillColor: '#fff', fillOpacity: .6, weight: f.properties.place=='city'?3:1 })
+                }).addTo(map).bindPopup(l => props(l.feature.properties));
             });           
         </script>
     </body>

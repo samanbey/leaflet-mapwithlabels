@@ -2,6 +2,8 @@
 Extends L.Map with automatic labeling.
 Labels layers if the `label` option is present.
 
+Labels are only placed if there is no overlap.
+
 # Usage
 - include JavaScript and CSS file:
 ```HTML
@@ -43,6 +45,9 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
 - `labelPriority`: priority of label (higher numbers come earlier). Either a number or a function.
 - `markerWithLabelOnly`: marker is displayed if its label also fits.
 
+## Deafult label style
+Labels are `<span>` elements with `leaflet-label` class. Default label style is set in `leaflet-mapwithlabels.css`.
+
 # Known issues
 - L.GeoJSON does not pass over options to its custom Marker layers, 
   therefore if custom markers are used for GeoJSON points, label-specific options has to be included within marker factory function options:
@@ -61,7 +66,7 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
   If the pointToLayer option is not used, it is enough to include `markersInheritOptions: true` in options.
         
 # Examples
-https://samanbey.github.io/leaflet-mapwithlabels/example_points.html
-https://samanbey.github.io/leaflet-mapwithlabels/example_line.html
-https://samanbey.github.io/leaflet-mapwithlabels/example_poly.html
-https://samanbey.github.io/leaflet-mapwithlabels/example.html
+- 3182 Hungarian settlements as point objects: https://samanbey.github.io/leaflet-mapwithlabels/example_points.html
+- Roads with numbers: https://samanbey.github.io/leaflet-mapwithlabels/example_line.html
+- Polygons with label: https://samanbey.github.io/leaflet-mapwithlabels/example_poly.html
+- Several layers with labels: https://samanbey.github.io/leaflet-mapwithlabels/example.html
