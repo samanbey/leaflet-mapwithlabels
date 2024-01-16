@@ -20,6 +20,10 @@ L.LayerGroup.include({
 	onAdd(map) {
 		this.eachLayer(l => map.addLayer(l, false), map);
         map._updateLabels();
+	},
+	onRemove(map) {
+		this.eachLayer(l => map.removeLayer(l, false), map);
+        map._updateLabels();
 	}    
 });
 
@@ -34,7 +38,6 @@ L.MapWithLabels = L.Map.extend({
     initialize(id, options) {
         L.Map.prototype.initialize.call(this, id, options);
         this._labelContainer = L.DomUtil.create('div', '', this.getPane(this.options.labelPane));
-        this.on('zoomend', this._updateLabels);
         this.on('moveend', this._updateLabels);
         this.on('zoomanim', this._zoomAnim);
     },
@@ -75,12 +78,13 @@ L.MapWithLabels = L.Map.extend({
         }        
     },
     
-    removeLayer(layer) {
+    removeLayer(layer, updateLabels = true) {
         let layerId = layer._leaflet_id;
         L.Map.prototype.removeLayer.call(this, layer);        
         if (this._labels[layerId]) {
             delete this._labels[layerId];
-            this._updateLabels();
+            if (updateLabels)
+                this._updateLabels();
         }
     },
 
@@ -100,31 +104,31 @@ L.MapWithLabels = L.Map.extend({
     
     _addOffset(pos, labelPos, gap, label) {
         /** calculates the label position relative to the anchor point */
-        let ls = label.span;
         switch (labelPos) {
             case 'r':
                 pos.x += label.size[0] - label.anchor[0] + gap;
-                pos.y += label.size[1]/2 - label.anchor[1] - ls.clientHeight/2;
+                pos.y += label.size[1]/2 - label.anchor[1] - label.lh/2;
                 break;
             case 'l':
-                pos.x -= label.anchor[0] + gap + ls.clientWidth;
-                pos.y += label.size[1]/2 - label.anchor[1] - ls.clientHeight/2;
+                pos.x -= label.anchor[0] + gap + label.lw;
+                pos.y += label.size[1]/2 - label.anchor[1] - label.lh/2;
                 break;
             case 'cc':
-                pos.x -= label.anchor[0] + ls.clientWidth/2;
-                pos.y -= label.anchor[1] + ls.clientHeight/2;
+                pos.x -= label.anchor[0] + label.lw/2;
+                pos.y -= label.anchor[1] + label.lh/2;
                 break;
         }
     },
         
     _intersects(bb1, bb2) {
-        /// checks if two bounding boxes intersect
+        /** checks if two bounding boxes intersect */
         let b1 = L.bounds([[bb1.x1, bb1.y1], [bb1.x2, bb1.y2]]), 
             b2 = L.bounds([[bb2.x1, bb2.y1], [bb2.x2, bb2.y2]]);
         return b1.intersects(b2);
     },
     
-    _updateLabels() {
+    _updateLabels(e) {
+        console.log(e)
         let t1=Date.now();
         this._labelContainer.innerHTML = ''; // remove all labels
         
@@ -146,9 +150,13 @@ L.MapWithLabels = L.Map.extend({
             mapy2 = mapy1 + this._container.clientHeight;
             
         // placing labels in priority order
+        let n = 0;
         for(let i = 0; i < this._labelPriOrder.length; i++) {
             let lab = this._labels[this._labelPriOrder[i].id]; // the label to place
+            let lt = typeof lab.label == 'function' ? lab.label(lab.layer) : lab.label; // label text
             let pos = this.latLngToLayerPoint(lab.latLng); // label reference point pixel position
+            if (pos.x < mapx1 || pos.x > mapx2 || pos.y < mapy1 || pos.y > mapy2)
+                continue; // if the reference point is out of the viewport, do nothing
             let markerbb = { 
                 x1: pos.x - lab.anchor[0], 
                 y1: pos.y - lab.anchor[1], 
@@ -164,6 +172,7 @@ L.MapWithLabels = L.Map.extend({
                         return true;
                     }
                 });
+            
             // create <span> element for label
             let ls = L.DomUtil.create('span', 'leaflet-label', this._labelContainer);
             // set custom label style
@@ -172,17 +181,21 @@ L.MapWithLabels = L.Map.extend({
                 ls.style[r] = st[r];
             lab.span = ls;
             // set label text
-            ls.innerHTML = typeof lab.label == 'function' ? lab.label(lab.layer) : lab.label;
+            ls.innerHTML = lt;
+
             if (fits) {
                 // possible label positions
                 let po = lab.layer.options.labelPos == 'auto' ? this._labelPosOrder : [ lab.layer.options.labelPos ];
+                lab.lw = ls.clientWidth;
+                lab.lh = ls.clientHeight;
+                
                 // try possible label positions
                 for (let posi in po) {
                     fits = true;
                     let lp = po[posi];
                     let p = {...pos}; // copy position for later
                     this._addOffset(pos, lp, lab.layer.options.labelGap, lab);
-                    bb = { x1: pos.x, y1: pos.y, x2: pos.x+ls.clientWidth, y2: pos.y+ls.clientHeight };
+                    bb = { x1: pos.x, y1: pos.y, x2: pos.x+lab.lw, y2: pos.y+lab.lh };
                     // check if label fits in view
                     if (bb.x1 > mapx2 || bb.x2 < mapx1 || bb.y1 > mapy2 || bb.y2 < mapy1) {
                         fits = false;
@@ -203,6 +216,7 @@ L.MapWithLabels = L.Map.extend({
             }
             if (fits) { 
                 // place label if fits
+                n++;
                 this._bbs.push(bb);
                 this._bbs.push(markerbb);
                 lab.span.style.top = `${pos.y}px`;
@@ -228,6 +242,9 @@ L.MapWithLabels = L.Map.extend({
             lab.span.style.top = `${pos.y}px`;
             lab.span.style.left = `${pos.x}px`; 
         }
+        /*let t2=Date.now();
+        console.log('update completed in '+((t2-t1)/1000).toFixed(1)+' s');
+        console.log(n + ' labels displayed');*/
     }
 });
 

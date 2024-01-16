@@ -29,7 +29,7 @@
             }
 
             // create map object
-            const map = L.mapWithLabels('map_div').fitBounds([[45.7, 16.1], [48.6, 22.9]]);
+            const map = L.mapWithLabels('map_div').fitBounds([[45.77, 16.16], [48.57, 22.87]]);
             
             // create map panes
             map.createPane('hydroPane').style.zIndex = 410;
@@ -50,14 +50,15 @@
                     label: l=>l.feature.properties.Nev, 
                     labelPos: 'cc', 
                     labelStyle: { fontWeight: 'bold', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
-                    labelPriority: l=>l.feature.properties.Nepesseg,
+                    labelPriority: 5e4,
                     style: polyColor
                 }).addTo(map).bindPopup(l => props(l.feature.properties));
             });
             
-            // hydorgraphy
+            // hydrography
             const hydroStyle = { color: 'blue', opacity: 1, fillColor: '#88f', fillOpacity: 1, weight: 1 };
             const hydroLabelStyle = { color: 'blue', fontStyle: 'italic', textAlign: 'center'};
+            const hydro = L.layerGroup().addTo(map);
 
             // large rivers
             fetch('data/folyok_poly.geojson').then(r => r.json()).then(d => {
@@ -68,7 +69,7 @@
                     labelPriority: 1e5,
                     pane: 'hydroPane',
                     style: hydroStyle
-                }).addTo(map).bindPopup(l => props(l.feature.properties));
+                }).addTo(hydro).bindPopup(l => props(l.feature.properties));
             });
 
             // large lakes
@@ -80,7 +81,7 @@
                     labelPriority: 1e5,
                     pane: 'hydroPane',
                     style: hydroStyle
-                }).addTo(map).bindPopup(l => props(l.feature.properties));
+                }).addTo(hydro).bindPopup(l => props(l.feature.properties));
             });
             
             // minor rivers
@@ -92,10 +93,11 @@
                     labelPriority: 1e4,
                     pane: 'hydroPane',
                     style: hydroStyle
-                }).addTo(map).bindPopup(l => props(l.feature.properties));
+                }).addTo(hydro).bindPopup(l => props(l.feature.properties));
             });
            
             // main road network
+            var roads = L.layerGroup().addTo(map);
             fetch('data/utak.geojson').then(r => r.json()).then(d => {
                 L.geoJSON(d, {
                     label: l=>l.feature.properties.szam.replace(';','<br/>'), 
@@ -108,10 +110,11 @@
                     }),
                     pane: 'roadPane',
                     style: f=>f.properties.szam.startsWith('M')?{ color: 'red', opacity: 1, weight: 5 }:{ color: 'orange', opacity: 1, weight: 3 },
-                }).addTo(map).bindPopup(l => props(l.feature.properties));
+                }).addTo(roads).bindPopup(l => props(l.feature.properties));
             });
 
             // settlements
+            var settlements = L.layerGroup().addTo(map);
             fetch('data/hu_settl.geojson').then(r => r.json()).then(d => {
                 L.geoJSON(d, {
                     markersInheritOptions: true,
@@ -124,8 +127,15 @@
                         label: l => l.feature.properties.name
                     }), 
                     style: f => ({ color: '#000', fillColor: '#fff', fillOpacity: .6, weight: f.properties.place=='city'?3:1 })
-                }).addTo(map).bindPopup(l => props(l.feature.properties));
-            });           
+                }).addTo(settlements).bindPopup(l => props(l.feature.properties));
+            }); 
+
+            // layers control
+            L.control.layers(null, {
+                'Hydrography': hydro,
+                'Road network': roads,
+                'Settlements': settlements
+            }).addTo(map);
         </script>
     </body>
 </html>
