@@ -12,10 +12,12 @@
 L.Layer.mergeOptions({
     labelGap: 2,
     labelPos: 'auto',
-    labelStyle: {}
+    labelStyle: {},
+    labelRepeatAlongLines: false,
+    labelRepeatDistance: 200
 });
 
-// LayerGroup has to be modified to prevent updating labels after the addition of each single sublayer
+// LayerGroup has to be modified to prevent updating labels after the addition/removal of each single sublayer
 L.LayerGroup.include({
 	onAdd(map) {
 		this.eachLayer(l => map.addLayer(l, false), map);
@@ -80,11 +82,12 @@ L.MapWithLabels = L.Map.extend({
     
     removeLayer(layer, updateLabels = true) {
         let layerId = layer._leaflet_id;
-        L.Map.prototype.removeLayer.call(this, layer);        
+        L.Map.prototype.removeLayer.call(this, layer);
+        // if a layer is removed, also remove its label
         if (this._labels[layerId]) {
             delete this._labels[layerId];
             if (updateLabels)
-                this._updateLabels();
+                this._updateLabels(); // update labels is necessary. 
         }
     },
 
@@ -127,9 +130,8 @@ L.MapWithLabels = L.Map.extend({
         return b1.intersects(b2);
     },
     
-    _updateLabels(e) {
-        console.log(e)
-        let t1=Date.now();
+    _updateLabels() {
+        /** updates labels on map */
         this._labelContainer.innerHTML = ''; // remove all labels
         
         this._bbs=[]; // array of bounding boxes.
@@ -155,100 +157,148 @@ L.MapWithLabels = L.Map.extend({
             let lab = this._labels[this._labelPriOrder[i].id]; // the label to place
             let lt = typeof lab.label == 'function' ? lab.label(lab.layer) : lab.label; // label text
             let pos = this.latLngToLayerPoint(lab.latLng); // label reference point pixel position
-            if (pos.x < mapx1 || pos.x > mapx2 || pos.y < mapy1 || pos.y > mapy2)
-                continue; // if the reference point is out of the viewport, do nothing
-            let markerbb = { 
-                x1: pos.x - lab.anchor[0], 
-                y1: pos.y - lab.anchor[1], 
-                x2: pos.x - lab.anchor[0] + lab.size[0], 
-                y2: pos.y - lab.anchor[1] + lab.size[1] 
-            }; // bounding box of a marker icon
-            let fits = true;
-            // check icon placing conflict for point features with markers
-            if (lab.size[0] > 0 && lab.size[1] > 0) 
-                this._bbs.some(b => {
-                    if (this._intersects(b, markerbb)) {                        
-                        fits = false;
-                        return true;
-                    }
-                });
-            
-            // create <span> element for label
-            let ls = L.DomUtil.create('span', 'leaflet-label', this._labelContainer);
-            // set custom label style
-            let st = (typeof lab.layer.options.labelStyle == 'function') ? lab.layer.options.labelStyle(lab.layer) : lab.layer.options.labelStyle;
-            for (let r in st)
-                ls.style[r] = st[r];
-            lab.span = ls;
-            // set label text
-            ls.innerHTML = lt;
-
-            if (fits) {
-                // possible label positions
-                let po = lab.layer.options.labelPos == 'auto' ? this._labelPosOrder : [ lab.layer.options.labelPos ];
-                lab.lw = ls.clientWidth;
-                lab.lh = ls.clientHeight;
-                
-                // try possible label positions
-                for (let posi in po) {
-                    fits = true;
-                    let lp = po[posi];
-                    let p = {...pos}; // copy position for later
-                    this._addOffset(pos, lp, lab.layer.options.labelGap, lab);
-                    bb = { x1: pos.x, y1: pos.y, x2: pos.x+lab.lw, y2: pos.y+lab.lh };
-                    // check if label fits in view
-                    if (bb.x1 > mapx2 || bb.x2 < mapx1 || bb.y1 > mapy2 || bb.y2 < mapy1) {
-                        fits = false;
-                    }
-                    else 
-                        this._bbs.some(b => {
-                            if (this._intersects(b,bb)) {                        
-                                fits = false;
-                                return true;
-                            }
-                        }); // check for conflicts with already existing labels
-                    if (fits) {
-                        lab.pos = lp;
-                        break;
-                    }
-                    pos = p; // if this position did not fit, return to original marker position and try next one                   
-                }
+            let positions = [];
+            if (lab.layer.options.labelRepeatAlongLines && lab.geomType.endsWith('LineString')) {
+                // labels repeated along line
+                positions = this._positionsOnLinestring(lab.layer, lab.layer.options.labelRepeatDistance);
             }
-            if (fits) { 
-                // place label if fits
-                n++;
-                this._bbs.push(bb);
-                this._bbs.push(markerbb);
+            else 
+                positions.push(pos);
+            for(let j = 0; j < positions.length; j++) {
+                pos = positions[j];
+                if (pos.x < mapx1 || pos.x > mapx2 || pos.y < mapy1 || pos.y > mapy2)
+                    continue; // if the reference point is out of the viewport, do nothing
+                let markerbb = { 
+                    x1: pos.x - lab.anchor[0], 
+                    y1: pos.y - lab.anchor[1], 
+                    x2: pos.x - lab.anchor[0] + lab.size[0], 
+                    y2: pos.y - lab.anchor[1] + lab.size[1] 
+                }; // bounding box of a marker icon
+                let fits = true;
+                // check icon placing conflict for point features with markers
+                if (lab.size[0] > 0 && lab.size[1] > 0) 
+                    this._bbs.some(b => {
+                        if (this._intersects(b, markerbb)) {                        
+                            fits = false;
+                            return true;
+                        }
+                    });
+                
+                // create <span> element for label
+                let ls = L.DomUtil.create('span', 'leaflet-label', this._labelContainer);
+                // set custom label style
+                let st = (typeof lab.layer.options.labelStyle == 'function') ? lab.layer.options.labelStyle(lab.layer) : lab.layer.options.labelStyle;
+                for (let r in st)
+                    ls.style[r] = st[r];
+                lab.span = ls;
+                // set label text
+                ls.innerHTML = lt;
+
+                if (fits) {
+                    // possible label positions
+                    let po = lab.layer.options.labelPos == 'auto' ? this._labelPosOrder : [ lab.layer.options.labelPos ];
+                    lab.lw = ls.clientWidth;
+                    lab.lh = ls.clientHeight;
+                    
+                    // try possible label positions
+                    for (let posi in po) {
+                        fits = true;
+                        let lp = po[posi];
+                        let p = {...pos}; // copy position for later
+                        this._addOffset(pos, lp, lab.layer.options.labelGap, lab);
+                        bb = { x1: pos.x, y1: pos.y, x2: pos.x+lab.lw, y2: pos.y+lab.lh };
+                        // check if label fits in view
+                        if (bb.x1 > mapx2 || bb.x2 < mapx1 || bb.y1 > mapy2 || bb.y2 < mapy1) {
+                            fits = false;
+                        }
+                        else 
+                            this._bbs.some(b => {
+                                if (this._intersects(b,bb)) {                        
+                                    fits = false;
+                                    return true;
+                                }
+                            }); // check for conflicts with already existing labels
+                        if (fits) {
+                            lab.pos = lp;
+                            break;
+                        }
+                        pos = p; // if this position did not fit, return to original marker position and try next one                   
+                    }
+                }
+                if (fits) { 
+                    // place label if fits
+                    n++;
+                    this._bbs.push(bb);
+                    this._bbs.push(markerbb);
+                    lab.span.style.top = `${pos.y}px`;
+                    lab.span.style.left = `${pos.x}px`; 
+                    // check whether the respective marker also has to be (re-)displayed
+                    if (lab.layer.options.markerWithLabelOnly) {
+                        let o = lab.layer._icon || lab.layer._path;
+                        o.style.display = '';
+                        if (lab.layer._shadow)
+                            lab.layer._shadow.style.display = '';
+                    }            }
+                else {
+                    // remove label <span> if does not fit
+                    this._labelContainer.removeChild(lab.span);
+                    // check whether the respective marker also has to be hidden
+                    if (lab.layer.options.markerWithLabelOnly) {
+                        let o = lab.layer._icon || lab.layer._path;
+                        o.style.display = 'none';
+                        if (lab.layer._shadow)
+                            lab.layer._shadow.style.display = 'none';
+                    }
+                }
                 lab.span.style.top = `${pos.y}px`;
                 lab.span.style.left = `${pos.x}px`; 
-                // check whether the respective marker also has to be (re-)displayed
-                if (lab.layer.options.markerWithLabelOnly) {
-                    let o = lab.layer._icon || lab.layer._path;
-                    o.style.display = '';
-                    if (lab.layer._shadow)
-                        lab.layer._shadow.style.display = '';
-                }            }
-            else {
-                // remove label <span> if does not fit
-                this._labelContainer.removeChild(lab.span);
-                // check whether the respective marker also has to be hidden
-                if (lab.layer.options.markerWithLabelOnly) {
-                    let o = lab.layer._icon || lab.layer._path;
-                    o.style.display = 'none';
-                    if (lab.layer._shadow)
-                        lab.layer._shadow.style.display = 'none';
-                }
             }
-            lab.span.style.top = `${pos.y}px`;
-            lab.span.style.left = `${pos.x}px`; 
         }
-        /*let t2=Date.now();
-        console.log('update completed in '+((t2-t1)/1000).toFixed(1)+' s');
-        console.log(n + ' labels displayed');*/
+    },
+    _positionsOnLinestring(ls, dist) {
+        /** returns a list of [x, y] label positions along a linestring (L.Polyline) in `dist` pixel distances */
+        // cartesian distance of two points
+        let pdist = (p1, p2) => Math.sqrt((p2.x - p1.x)*(p2.x - p1.x) + (p2.y - p1.y)*(p2.y - p1.y));  
+        // point between p1 and p2, in d distance from p1
+        let inbetween = (p1, p2, d) => {
+            s = pdist(p1, p2);
+            if (s==0) 
+                return { x: p1.x, y: p1.y }
+            return { x: p1.x + (p2.x-p1.x)*d/s, y: p1.y + (p2.y-p1.y)*d/s }
+        }
+        // calculate bounds and return one single point if bounds are small
+        let b = ls.getBounds()
+        let b1 = this.latLngToLayerPoint(b.getSouthWest());
+        let b2 = this.latLngToLayerPoint(b.getNorthEast());
+        if (pdist(b1, b2) <= dist) // if the size of the line is small, simply place a label to its centre
+            return [this.latLngToLayerPoint(L.LineUtil.polylineCenter(ls._defaultShape(), L.CRS.EPSG3857))];
+        // otherwise repeat it along the line
+        let coords = ls._latlngs.map(latlng => map.latLngToLayerPoint(latlng))
+        // trims coords at d distance from its start and returns that point
+        function trimAt(d) {
+            let sumDist = 0;
+            while (coords.length>1 && sumDist + pdist(coords[0], coords[1]) < d) {
+                sumDist += pdist(coords[0], coords[1]);
+                coords.shift();
+            }
+            if (coords.length<2)
+                return null;
+            let pt = inbetween(coords[0], coords[1], d - sumDist);
+            coords[0] = pt;
+            return { x: pt.x, y: pt.y }
+        }
+        let pts = [];
+        // first find a point in dist/2 distance
+        let pt = trimAt(dist/2);
+        while (pt) {
+            pts.push(pt);
+            pt = trimAt(dist);
+        }
+        return pts;       
     }
 });
 
-/// factory function
+/** factory function */
 L.mapWithLabels = function(id, options) {
     return new L.MapWithLabels(id, options);
 };

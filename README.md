@@ -44,6 +44,8 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
                 Default: `{}`
 - `labelPriority`: priority of label (higher numbers come earlier). Either a number or a function.
 - `markerWithLabelOnly`: marker is displayed if its label also fits.
+- `labelRepeatAlongLines`: repeat labels along linestrings (default: false).
+- `labelRepeatDistance`: distance of repeated labels along linestrings in pixels (default: 200). Only takes effect if `labelRepeatAlongLines` is true.
 
 ## Deafult label style
 Labels are `<span>` elements with `leaflet-label` class. Default label style is set in `leaflet-mapwithlabels.css`.

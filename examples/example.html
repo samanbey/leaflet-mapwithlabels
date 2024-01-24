@@ -103,6 +103,7 @@
                     label: l=>l.feature.properties.szam.replace(';','<br/>'), 
                     labelPriority: l=>l.feature.properties.szam.startsWith('M')?2:1,
                     labelPos: 'cc', 
+                    labelRepeatAlongLines: true,
                     labelStyle: l=>({ 
                         background: l.feature.properties.szam.startsWith('M')?'blue':'green', 
                         border: 'solid 2px white', padding: '0 5px',
