@@ -101,7 +101,7 @@
             fetch('data/utak.geojson').then(r => r.json()).then(d => {
                 L.geoJSON(d, {
                     label: l=>l.feature.properties.szam.replace(';','<br/>'), 
-                    labelPriority: l=>l.feature.properties.szam.startsWith('M')?2:1,
+                    labelPriority: l=>l.feature.properties.szam.startsWith('M')?1000:500,
                     labelPos: 'cc', 
                     labelRepeatAlongLines: true,
                     labelStyle: l=>({ 
