@@ -40,14 +40,14 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
 ## label-specific options of layers:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `label` | String \| Function(\<Layer\>) | undefined | label string literal or function assigning label to layer objects. |
-| `labelGap` | Number | `2` | gap between marker and label. |
-| `labelPos` | String | `'auto'` | label position. Possible values: `'l'`, `'r'`, `'cc'` or `'auto'`. 'auto' means first right position is tried, then left. |
-| `labelStyle` | Object \| Function(\<Layer\>) | `{}` | label styling CSS object literal or function assigning style object to layer objects. |
-| `labelPriority` | Number \| Function(\<Layer\>) priority of label (higher numbers come earlier). Either a number or a function. |
-| `markerWithLabelOnly` | Boolean | `false` | marker is displayed if its label also fits. |
-| `labelRepeatAlongLines` | Boolean | `false` | repeat labels along linestrings. |
-| `labelRepeatDistance` | Number | `200` | distance of repeated labels along linestrings in pixels. Only takes effect if `labelRepeatAlongLines` is true. |
+| `label` | `String` \| `Function(\<Layer\>)` | undefined | label string literal or function assigning label to layer objects. |
+| `labelGap` | `Number` | `2` | gap between marker and label. |
+| `labelPos` | `String` | `'auto'` | label position. Possible values: `'l'`, `'r'`, `'cc'` or `'auto'`. 'auto' means first right position is tried, then left. |
+| `labelStyle` | `Object` \| Function(\<Layer\>) | `{}` | label styling CSS object literal or function assigning style object to layer objects. |
+| `labelPriority` | `Number` \| Function(\<Layer\>) | 0 | priority of label (higher numbers come earlier). Either a number or a function. |
+| `markerWithLabelOnly` | `Boolean` | `false` | marker is displayed if its label also fits. |
+| `labelRepeatAlongLines` | `Boolean` | `false` | repeat labels along linestrings. |
+| `labelRepeatDistance` | `Number` | `200` | distance of repeated labels along linestrings in pixels. Only takes effect if `labelRepeatAlongLines` is true. |
 
 ## Deafult label style
 Labels are `<span>` elements with `leaflet-label` class. Default label style is set in `leaflet-mapwithlabels.css`.
