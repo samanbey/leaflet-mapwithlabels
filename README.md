@@ -6,31 +6,31 @@ Labels are only placed if there is no overlap.
 
 # Usage
 - include JavaScript and CSS file:
-    ```HTML
-    <link rel="stylesheet" href="https://samanbey.github.io/leaflet-mapwithlabels/leaflet-mapwithlabels.css" />
-    <script src="https://samanbey.github.io/leaflet-mapwithlabels/leaflet-mapwithlabels.js"></script>
-    ```
+```HTML
+<link rel="stylesheet" href="https://samanbey.github.io/leaflet-mapwithlabels/leaflet-mapwithlabels.css" />
+<script src="https://samanbey.github.io/leaflet-mapwithlabels/leaflet-mapwithlabels.js"></script>
+```
 - use `L.mapWithLabels()` instead of `L.map()`
-    ```JavaScript
-    const map = L.mapWithLabels('map_div');
-    ``` 
+```JavaScript
+const map = L.mapWithLabels('map_div');
+``` 
 
 - set `label` option for layer objects, either as a string literal 
   or a function assigning label to layer objects
-    ```JavaScript
-    // add a marker with a label
-    L.marker([47.5, 19.05], { label: 'Budapest' }).addTo(map);
+```JavaScript
+// add a marker with a label
+L.marker([47.5, 19.05], { label: 'Budapest' }).addTo(map);
 
-    // fetch geojson data and create a polygon layer with labels
-    fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
-        L.geoJSON(d, {
-            label: l => l.feature.properties.Nev, 
-            labelPos: 'cc', 
-            labelStyle: { color: 'darkblue', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center'},
-            labelPriority: l => l.feature.properties.Nepesseg,
-        }).addTo(map);
-    });
-    ```
+// fetch geojson data and create a polygon layer with labels
+fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
+    L.geoJSON(d, {
+        label: l => l.feature.properties.Nev, 
+        labelPos: 'cc', 
+        labelStyle: { color: 'darkblue', whiteSpace: 'normal', minWidth: '120px', textAlign: 'center' },
+        labelPriority: l => l.feature.properties.Nepesseg,
+    }).addTo(map);
+});
+```
 
 ## options of `MapWithLabels()`
 | Option | Type | Default | Description |
@@ -40,11 +40,11 @@ Labels are only placed if there is no overlap.
 ## label-specific options of layers:
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `label` | String\|Function(<Layer>) | undefined | label string literal or function assigning label to layer objects. |
+| `label` | String \| Function(\<Layer\>) | undefined | label string literal or function assigning label to layer objects. |
 | `labelGap` | Number | `2` | gap between marker and label. |
 | `labelPos` | String | `'auto'` | label position. Possible values: `'l'`, `'r'`, `'cc'` or `'auto'`. 'auto' means first right position is tried, then left. |
-| `labelStyle` | Object\|Function(<Layer>) | `{}` | label styling CSS object literal or function assigning style object to layer objects. |
-| `labelPriority` | Number\|Function(<Layer>) priority of label (higher numbers come earlier). Either a number or a function. |
+| `labelStyle` | Object \| Function(\<Layer\>) | `{}` | label styling CSS object literal or function assigning style object to layer objects. |
+| `labelPriority` | Number \| Function(\<Layer\>) priority of label (higher numbers come earlier). Either a number or a function. |
 | `markerWithLabelOnly` | Boolean | `false` | marker is displayed if its label also fits. |
 | `labelRepeatAlongLines` | Boolean | `false` | repeat labels along linestrings. |
 | `labelRepeatDistance` | Number | `200` | distance of repeated labels along linestrings in pixels. Only takes effect if `labelRepeatAlongLines` is true. |
