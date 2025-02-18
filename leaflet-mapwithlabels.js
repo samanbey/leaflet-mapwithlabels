@@ -273,7 +273,7 @@ L.MapWithLabels = L.Map.extend({
         if (pdist(b1, b2) <= dist) // if the size of the line is small, simply place a label to its centre
             return [this.latLngToLayerPoint(L.LineUtil.polylineCenter(ls._defaultShape(), L.CRS.EPSG3857))];
         // otherwise repeat it along the line
-        let coords = ls._latlngs.map(latlng => map.latLngToLayerPoint(latlng))
+        let coords = ls._latlngs.map(latlng => this.latLngToLayerPoint(latlng))
         // trims coords at d distance from its start and returns that point
         function trimAt(d) {
             let sumDist = 0;
