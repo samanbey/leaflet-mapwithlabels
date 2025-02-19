@@ -52,6 +52,11 @@ fetch('hu_megyek.geojson').then(r => r.json()).then(d => {
 ## Deafult label style
 Labels are `<span>` elements with `leaflet-label` class. Default label style is set in `leaflet-mapwithlabels.css`.
 
+## Label text
+Label text is assigned to the `innerHTML` property of `<span>` elements, therefore it is treated as HTML code. 
+This gives extra possibilities (e.g. labels can be links) but also requires some attention. 
+If any client input is used as labels, it is advisable to apply proper escaping to prevent XSS vulnerabilities.
+
 # Known issues
 - L.GeoJSON does not pass over options to its custom Marker layers, 
   therefore if custom markers are used for GeoJSON points, label-specific options has to be included within marker factory function options:
