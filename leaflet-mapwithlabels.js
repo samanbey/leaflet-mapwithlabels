@@ -5,7 +5,7 @@
  * automatically labels layers with `label` option set
  *
  * MIT License
- * Copyright (c) 2024 Gede M·ty·s
+ * Copyright (c) 2024 Gede M√°ty√°s
  */
 
 /** Default label settings for layers */
@@ -34,11 +34,12 @@ L.MapWithLabels = L.Map.extend({
         labelPane: 'tooltipPane'
     },
 
-    _labels: {}, // labels, stored by their respective layerId
     _labelPosOrder: ['r', 'l'],
     
     initialize(id, options) {
         L.Map.prototype.initialize.call(this, id, options);
+        
+        this._labels = {}; // labels, stored by their respective layerId
         this._labelContainer = L.DomUtil.create('div', '', this.getPane(this.options.labelPane));
         this.on('moveend', this._updateLabels);
         this.on('zoomanim', this._zoomAnim);
