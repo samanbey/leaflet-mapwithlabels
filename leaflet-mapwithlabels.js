@@ -62,8 +62,8 @@ L.MapWithLabels = L.Map.extend({
             // geographic reference point of the label: 
             // position of the marker or centroid of polygon or central opint of polyline
             let latLng = layer.getLatLng ? layer.getLatLng() :
-                geomType.endsWith('Polygon') ? L.PolyUtil.polygonCenter(layer._defaultShape(), L.CRS.EPSG3857)
-                                             : L.LineUtil.polylineCenter(layer._defaultShape(), L.CRS.EPSG3857);
+                geomType.endsWith('Polygon') ? L.PolyUtil.polygonCenter(layer._defaultShape(), this.options.crs)
+                                             : L.LineUtil.polylineCenter(layer._defaultShape(), this.options.crs);
         
             let pri = layer.options.labelPriority ? typeof layer.options.labelPriority == "function" ? layer.options.labelPriority(layer) : layer.options.labelPriority : 0;
             // labels are stored by their layer ID
@@ -272,7 +272,7 @@ L.MapWithLabels = L.Map.extend({
         let b1 = this.latLngToLayerPoint(b.getSouthWest());
         let b2 = this.latLngToLayerPoint(b.getNorthEast());
         if (pdist(b1, b2) <= dist) // if the size of the line is small, simply place a label to its centre
-            return [this.latLngToLayerPoint(L.LineUtil.polylineCenter(ls._defaultShape(), L.CRS.EPSG3857))];
+            return [this.latLngToLayerPoint(L.LineUtil.polylineCenter(ls._defaultShape(), this.options.crs))];
         // otherwise repeat it along the line
         let coords = ls._latlngs.map(latlng => this.latLngToLayerPoint(latlng))
         // trims coords at d distance from its start and returns that point
